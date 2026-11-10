@@ -21,6 +21,13 @@ class TestCheckAvailability:
         assert {"slot_id", "provider", "start", "spoken"} <= s.keys()
         assert s["spoken"].startswith("Tuesday, November 10 at")
 
+    def test_offers_spread_across_different_times(self, call):
+        # Regression: first real call offered "1 PM with three different providers".
+        res = call("check_availability", date=TOMORROW, time_of_day="afternoon")
+        starts = [s["start"] for s in res["slots"]]
+        assert len(starts) == len(set(starts))
+        assert starts == sorted(starts)
+
     def test_past_date_is_rejected(self, call):
         assert err(call("check_availability", date="2026-11-02")) == "DATE_IN_PAST"
 

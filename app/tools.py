@@ -134,6 +134,28 @@ def _open_slots(conn, *, day: date | None = None, provider_id: int | None = None
     return conn.execute(sql, params).fetchall()
 
 
+def _diverse(slots: list, n: int) -> list:
+    """Pick up to n slots, preferring distinct start times.
+
+    Without this, a 1 PM opening with three providers fills three of the offers
+    with the same time (seen in the first real test call). Callers care more
+    about *when* than *who*, so spread the times first, then fill.
+    """
+    picked, seen_times = [], set()
+    for s in slots:
+        if s["start_time"] not in seen_times:
+            picked.append(s)
+            seen_times.add(s["start_time"])
+        if len(picked) == n:
+            return picked
+    for s in slots:
+        if s not in picked:
+            picked.append(s)
+        if len(picked) == n:
+            break
+    return sorted(picked, key=lambda s: s["start_time"])
+
+
 def resolve_provider(conn, provider: str | None):
     """'Dr. Patel', 'doctor patel', 'Patel', 'Maya Patel' -> provider row. None if not given."""
     if not provider or not provider.strip():
@@ -216,7 +238,7 @@ def check_availability(conn, date_str: str, provider: str | None = None,
         "provider": prov["name"] if prov else None,
         "time_of_day": tod,
         "total_open": len(slots),
-        "slots": [_slot_dict(s) for s in slots[:MAX_SLOTS_OFFERED]],
+        "slots": [_slot_dict(s) for s in _diverse(slots, MAX_SLOTS_OFFERED)],
     }
 
     if slots:
