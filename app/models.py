@@ -20,6 +20,8 @@ class BookAppointmentIn(BaseModel):
     dob: str = Field(..., description="Caller's date of birth, YYYY-MM-DD.")
     slot_id: int = Field(..., description="slot_id from a check_availability result. Never invent one.")
     reason: str = Field(..., description="Short, non-clinical reason for the visit, in the caller's words.")
+    new_patient_confirmed: bool = Field(
+        False, description="Only set true after a CONFIRM_NAME result when the caller said the name on file is NOT them.")
 
 
 class FindAppointmentIn(BaseModel):

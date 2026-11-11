@@ -264,7 +264,8 @@ def check_availability(conn, date_str: str, provider: str | None = None,
     return result
 
 
-def book_appointment(conn, patient_name: str, dob: str, slot_id: int, reason: str) -> dict:
+def book_appointment(conn, patient_name: str, dob: str, slot_id: int, reason: str,
+                     new_patient_confirmed: bool = False) -> dict:
     patient_name = require_text(patient_name, "patient_name", 100)
     reason = require_text(reason, "reason", 200)
     dob_d = parse_dob(dob)
@@ -286,6 +287,20 @@ def book_appointment(conn, patient_name: str, dob: str, slot_id: int, reason: st
                         alternatives=_alternatives(conn, slot))
 
     patient, match = _find_patient(conn, patient_name, dob_d)
+    if match == "fuzzy" and new_patient_confirmed:
+        patient = None  # caller said the similar record is NOT them
+    elif match == "fuzzy":
+        # Found in testing: a misheard name ("Orboni") fuzzy-matched an earlier misheard
+        # record ("Carboni") and the booking silently went onto the wrong record.
+        # Never attach a booking to a fuzzy match without the caller confirming the name.
+        raise ToolError(
+            "CONFIRM_NAME",
+            f"No exact match, but a patient with this date of birth is on file as {patient['full_name']}.",
+            f"Ask: \"I have your name as {patient['full_name']}, is that right?\" If yes, call book_appointment "
+            f"again with patient_name exactly \"{patient['full_name']}\". If no, ask them to spell their full "
+            "name and call again with the corrected name and new_patient_confirmed=true.",
+            matched_name=patient["full_name"],
+        )
     if patient is None:
         cur = conn.execute("INSERT INTO patients (full_name, name_key, dob) VALUES (?, ?, ?)",
                            (patient_name.title(), name_key(patient_name), dob_d.isoformat()))

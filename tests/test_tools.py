@@ -87,10 +87,25 @@ class TestBookAppointment:
                    slot_id=open_slot()["slot_id"], reason="cough")
         assert res["patient_status"] == "existing" and res["patient_name"] == "John Smith"
 
-    def test_mumbled_name_matches_existing_patient_by_dob(self, call, open_slot):
+    def test_similar_name_requires_confirmation_before_booking(self, call, open_slot):
+        # Regression (test call 2026-11-11): "Orboni" fuzzy-matched an earlier misheard
+        # "Carboni" record and was booked onto it without asking.
+        slot = open_slot()
         res = call("book_appointment", patient_name="Jon Smith", dob="1985-03-14",
+                   slot_id=slot["slot_id"], reason="cough")
+        assert err(res) == "CONFIRM_NAME" and res["matched_name"] == "John Smith"
+        # Nothing was booked
+        assert slot["slot_id"] in [s["slot_id"] for s in call("check_availability", date=TOMORROW)["slots"]]
+
+    def test_confirmed_name_books_onto_existing_record(self, call, open_slot):
+        res = call("book_appointment", patient_name="John Smith", dob="1985-03-14",
                    slot_id=open_slot()["slot_id"], reason="cough")
-        assert res["patient_status"] == "existing" and res["name_matched_fuzzily"] is True
+        assert res["ok"] and res["patient_status"] == "existing"
+
+    def test_caller_says_not_me_creates_new_patient(self, call, open_slot):
+        res = call("book_appointment", patient_name="Jon Smyth", dob="1985-03-14",
+                   slot_id=open_slot()["slot_id"], reason="cough", new_patient_confirmed=True)
+        assert res["ok"] and res["patient_status"] == "new" and res["patient_name"] == "Jon Smyth"
 
     def test_double_booking_returns_slot_taken_with_alternatives(self, call, open_slot):
         slot = open_slot()
