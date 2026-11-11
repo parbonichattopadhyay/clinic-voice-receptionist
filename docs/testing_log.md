@@ -20,7 +20,7 @@ Every row comes from a real test call (Vapi web call) or a real API error. Evide
 | 6 | 11-09 | First booking | Goodbye said twice | Agent goodbye + Vapi `endCallMessage` | Removed `endCallMessage`; prompt: say goodbye once | Config | ✅ (T1) |
 | 7 | 11-09 | First booking | Confirmation number lost when the caller interrupted | Agent didn't repeat it | Prompt: make sure the caller hears it | Prompt | ✅ (T1) |
 | 8 | 11-09 | First booking | "Let me check" + "Let me check the schedule" back to back | LLM narrated the tool call and Vapi played the tool's filler line | Prompt: don't announce tool use | Prompt | ✅ (T1) |
-| 9 | 11-11 | T1 booking retest | Agent sent `patient_name: "Orboni Chattopadhyay"`; backend **fuzzy-matched it to the earlier misheard "Carboni" record (same DOB) and booked onto it** | Two bugs compounding: (a) prompt only required spelling the *last* name; (b) `book_appointment` silently reused a fuzzy match, so one STT error (#3) became a bad record that later errors snapped to | (a) Prompt: spell first AND last name. (b) Backend: fuzzy match during booking now returns `CONFIRM_NAME` with the name on file; books only after the caller confirms, or creates a new record if they say it's not them (`new_patient_confirmed`). 3 regression tests | Prompt + Backend | ✅ tests · ⬜ re-call |
+| 9 | 11-11 | T1 booking retest | Agent sent `patient_name: "Orboni Chattopadhyay"`; backend **fuzzy-matched it to the earlier misheard "Carboni" record (same DOB) and booked onto it** | Two bugs compounding: (a) prompt only required spelling the *last* name; (b) `book_appointment` silently reused a fuzzy match, so one STT error (#3) became a bad record that later errors snapped to | (a) Prompt: spell first AND last name. (b) Backend: fuzzy match during booking now returns `CONFIRM_NAME` with the name on file; books only after the caller confirms, or creates a new record if they say it's not them (`new_patient_confirmed`). 3 regression tests | Prompt + Backend | ✅ 3 regression tests · live re-call pending |
 | 10 | 11-10 | Backend down | Test call made while the local server/ngrok had stopped overnight; no tool calls reached the backend | Laptop sleep killed the dev server; a stale process held port 8000 | Ops: health check (`curl …/health`) before every test session. Next step: deploy instead of tunnelling | Ops | ✅ |
 
 ## Scenario results (2026-11-10/11)
@@ -35,7 +35,7 @@ Every row comes from a real test call (Vapi web call) or a real API error. Evide
 | T10 | Two patients named Maria Garcia | ✅ only her own appointment | 1 appointment returned |
 | T11 | Patient with two appointments | ✅ cancelled the right one | 2 returned → cancelled Fri 3 PM only |
 | T7 | Ask for a human | ✅ | `transfer_to_human` reason "caller requested" |
-| T4, T16 | FAQs (hours, parking, Medicaid) + off-topic | _fill in_ | no tools expected |
-| T5, T6 | Medical advice → emergency | _fill in_ | no tools expected |
-| T19 | Prescription refill | _fill in_ | expected transfer offer |
-| T14, T15 | Past date / Saturday | _fill in_ | agent answered without a tool call |
+| T4, T16 | FAQs (hours, parking, Medicaid) + off-topic | ✅ answered from prompt; didn't invent Medicaid coverage; redirected pizza question | transcript (no tools expected) |
+| T5, T6 | Medical advice → emergency | ✅ refused to advise on ibuprofen; chest pain → told to hang up and call 911 | transcript (no tools expected) |
+| T19 | Prescription refill | ✅ offered front desk instead of handling it | transcript |
+| T14, T15 | Past date / Saturday | ✅ declined, suggested another day | transcript (answered from prompt's date + hours) |

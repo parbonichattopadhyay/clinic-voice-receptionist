@@ -58,7 +58,7 @@ flowchart LR
 
 ## Testing & iteration
 
-I tested the agent with scripted calls covering happy paths and messy cases (wrong DOB, misheard names, same-name patients, changing mind mid-booking, interruptions, impossible dates, silence, emergencies, requests for medical advice, and a double-booking race). Each failure was traced through the tool-call log and transcript to a root cause, then fixed in the prompt, the code, or the config, with a regression test where possible.
+I tested the agent with 9 voice calls covering 16 scripted scenarios: happy paths and messy cases (wrong DOB, misheard names, two patients with the same name, a patient with two appointments, changing mind mid-booking, past and weekend dates, off-topic requests, emergencies, and requests for medical advice). Double-booking under concurrency is covered by automated tests rather than a live call. Each failure was traced through the tool-call log and transcript to a root cause, then fixed in the prompt, the code, or the config, with a regression test where possible.
 
 Selected findings (full log: [`docs/testing_log.md`](docs/testing_log.md); scripts: [`docs/test_scripts.md`](docs/test_scripts.md)):
 
@@ -67,9 +67,11 @@ Selected findings (full log: [`docs/testing_log.md`](docs/testing_log.md); scrip
 | Booked a patient as "Carboni" instead of "Parboni" | Speech-to-text misheard an uncommon name; the agent never confirmed it | Prompt: always ask the caller to spell their last name, and require a full read-back (name, DOB, time, provider, reason) before booking |
 | Offered "1 PM with Dr. A, 1 PM with Dr. B, 1 PM with NP C" | API returned the earliest 5 slots; several providers were free at the same time | Code: offered slots now spread across distinct times (+ regression test) |
 | Goodbye spoken twice | Agent's goodbye + platform's end-call message | Config: removed the platform message |
-| Vapi rejected assistant creation | 40-character name limit; retired voice | Config fixes + regression test |
+| Second misheard name ("Orboni") was **booked onto the earlier misheard "Carboni" record** | Fuzzy name matching, built to tolerate speech errors, silently reused a near-match during booking, so one bad record attracted later errors | Backend now returns `CONFIRM_NAME` and books only after the caller confirms the name on file; prompt requires spelling first *and* last name (+ 3 regression tests) |
+| Caller said "Ayesha Raman" for patient Aisha Rahman | Speech-to-text spelling | ✅ No fix needed: `PATIENT_NOT_FOUND` + agent hint → agent asked for spelling → found and cancelled |
+| Vapi rejected assistant creation | 40-character name limit; voice retired by the platform | Config fixes + regression test |
 
-_[More rows added from the full test pass.]_
+**Results:** 9 test calls covering 16 scenarios (booking, reschedule, cancel, FAQs, transfer, wrong DOB, misheard names, duplicate patient names, multiple appointments, mind changes, past/weekend dates, off-topic, medical-advice and emergency guardrails). 10 issues found and fixed across prompt, backend, config, and ops. 60 automated tests. Backend tool calls answered in under 15 ms.
 
 ## Run it locally
 
