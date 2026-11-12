@@ -4,9 +4,9 @@ Every row comes from a real test call (Vapi web call) or a real API error. Evide
 
 ## Summary
 
-- **Test calls:** first booking call (2026-11-09) + 8 scripted calls (2026-11-10/11) covering 16 scenarios
-- **Tool calls logged during testing:** 24, all of them answered in under 15 ms by the backend
-- **Issues found:** 10 (2 platform config, 6 conversation/prompt, 2 backend logic) · all fixed; regression tests added for each code/config fix
+- **Test calls:** first booking call (2026-11-09) + 8 scripted calls (2026-11-10/11) covering 16 scenarios + 1 recorded demo call
+- **Tool calls logged during testing:** 29, all of them answered in under 15 ms by the backend
+- **Issues found:** 11 (5 prompt, 3 platform config, 1 backend, 1 prompt + backend, 1 ops) · regression tests added for each code/config fix
 
 ## Issues found and fixed
 
@@ -20,8 +20,9 @@ Every row comes from a real test call (Vapi web call) or a real API error. Evide
 | 6 | 11-09 | First booking | Goodbye said twice | Agent goodbye + Vapi `endCallMessage` | Removed `endCallMessage`; prompt: say goodbye once | Config | ✅ (T1) |
 | 7 | 11-09 | First booking | Confirmation number lost when the caller interrupted | Agent didn't repeat it | Prompt: make sure the caller hears it | Prompt | ✅ (T1) |
 | 8 | 11-09 | First booking | "Let me check" + "Let me check the schedule" back to back | LLM narrated the tool call and Vapi played the tool's filler line | Prompt: don't announce tool use | Prompt | ✅ (T1) |
-| 9 | 11-11 | T1 booking retest | Agent sent `patient_name: "Orboni Chattopadhyay"`; backend **fuzzy-matched it to the earlier misheard "Carboni" record (same DOB) and booked onto it** | Two bugs compounding: (a) prompt only required spelling the *last* name; (b) `book_appointment` silently reused a fuzzy match, so one STT error (#3) became a bad record that later errors snapped to | (a) Prompt: spell first AND last name. (b) Backend: fuzzy match during booking now returns `CONFIRM_NAME` with the name on file; books only after the caller confirms, or creates a new record if they say it's not them (`new_patient_confirmed`). 3 regression tests | Prompt + Backend | ✅ 3 regression tests · live re-call pending |
+| 9 | 11-11 | T1 booking retest | Agent sent `patient_name: "Orboni Chattopadhyay"`; backend **fuzzy-matched it to the earlier misheard "Carboni" record (same DOB) and booked onto it** | Two bugs compounding: (a) prompt only required spelling the *last* name; (b) `book_appointment` silently reused a fuzzy match, so one STT error (#3) became a bad record that later errors snapped to | (a) Prompt: spell first AND last name. (b) Backend: fuzzy match during booking now returns `CONFIRM_NAME` with the name on file; books only after the caller confirms, or creates a new record if they say it's not them (`new_patient_confirmed`). 3 regression tests | Prompt + Backend | ✅ 3 regression tests + live call 11-11: `CONFIRM_NAME` → caller said no → new record "Parboni Chattopadhyay" |
 | 10 | 11-10 | Backend down | Test call made while the local server/ngrok had stopped overnight; no tool calls reached the backend | Laptop sleep killed the dev server; a stale process held port 8000 | Ops: health check (`curl …/health`) before every test session. Next step: deploy instead of tunnelling | Ops | ✅ |
+| 11 | 11-11 | Demo recording: booking for "Abigail Smith" | Agent skipped asking for the spelling and went straight to DOB | LLM didn't follow the spelling rule for a common-sounding, third-party name; prompt rules are probabilistic | Prompt: spelling is a required step before the read-back, including for common names and when booking for someone else. Note: the critical safeguard (confirming similar names) is enforced in the backend, not just the prompt | Prompt | ⬜ re-call |
 
 ## Scenario results (2026-11-10/11)
 

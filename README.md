@@ -71,7 +71,7 @@ Selected findings (full log: [`docs/testing_log.md`](docs/testing_log.md); scrip
 | Caller said "Ayesha Raman" for patient Aisha Rahman | Speech-to-text spelling | ✅ No fix needed: `PATIENT_NOT_FOUND` + agent hint → agent asked for spelling → found and cancelled |
 | Vapi rejected assistant creation | 40-character name limit; voice retired by the platform | Config fixes + regression test |
 
-**Results:** 9 test calls covering 16 scenarios (booking, reschedule, cancel, FAQs, transfer, wrong DOB, misheard names, duplicate patient names, multiple appointments, mind changes, past/weekend dates, off-topic, medical-advice and emergency guardrails). 10 issues found and fixed across prompt, backend, config, and ops. 60 automated tests. Backend tool calls answered in under 15 ms.
+**Results:** 9 test calls covering 16 scenarios (booking, reschedule, cancel, FAQs, transfer, wrong DOB, misheard names, duplicate patient names, multiple appointments, mind changes, past/weekend dates, off-topic, medical-advice and emergency guardrails). 11 issues found and fixed across prompt, backend, config, and ops. 60 automated tests. Backend tool calls answered in under 15 ms.
 
 ## Run it locally
 
