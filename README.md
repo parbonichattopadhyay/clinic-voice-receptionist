@@ -1,6 +1,6 @@
 # Clinic Voice Receptionist
 
-> ⚠️ **Demo project.** "Riverside Family Medicine" is fictional and every patient record is fake. No real patient information is used anywhere.
+>  **Demo project.** "Riverside Family Medicine" is fictional and every patient record is fake. No real patient information is used anywhere.
 
 **An AI phone receptionist for a primary-care clinic that books, reschedules, and cancels appointments, answers front-desk questions, and knows when to hand off to a human, backed by a scheduling API I built and tested.**
 
