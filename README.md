@@ -4,7 +4,7 @@
 
 **An AI phone receptionist for a primary-care clinic that books, reschedules, and cancels appointments, answers front-desk questions, and knows when to hand off to a human, backed by a scheduling API I built and tested.**
 
-🎥 **Demo video:** _[link coming soon]_
+🎥 **Demo video (90 sec):** https://youtu.be/c2R5ylxYUc4
 
 ---
 
